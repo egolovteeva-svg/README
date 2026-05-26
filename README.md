@@ -23,32 +23,3 @@
 ## Использование LLM
 
 ChatGPT использовался для интернет-поиска подходящих open-source репозиториев, открытых датасетов. Все расчёты проверены на реальных данных, цифры в дашборде получены прогоном кода.
-
-## Дерево проекта
-
-```
-WrapItUp-Project/
-├── README.md
-├── requirements.txt, .gitignore
-├── data/
-│   ├── raw/        ← исходные датасеты
-│   └── processed/  ← генерируется командой build_processed_data
-├── src/
-│   ├── geo/
-│   │   ├── data_loader.py
-│   │   ├── analyzer.py
-│   │   ├── visualizer.py
-│   │   ├── routing.py
-│   │   └── geojson_loader.py
-│   ├── marketing/
-│   │   ├── data_loader.py, analyzer.py, visualizer.py
-│   │   ├── instagram_real.py
-│   │   ├── hh_fetcher.py, hh_analyzer.py
-│   │   ├── kaggle_analyzers.py
-│   │   └── wb_analyzer.py
-│   ├── labels.py
-│   └── build_processed_data.py
-├── notebooks/01_geo_and_marketing_analysis.ipynb
-├── dashboard/app.py
-└── reports/branch_README.md, business_recommendations.md
-```
