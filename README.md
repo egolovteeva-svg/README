@@ -7,7 +7,8 @@ WrapItUp
 Головтеева Елизавета (github: egolovteeva-svg)
 
 
-Голубовская Варвара (github: Vertoletik2315)
+Голубовская Варвара (github: varechkagolubovskaya-ui)
+
 
 ## Идея компании
 Сервис по подарочной упаковке товаров из интернет-магазинов (Ozon, Wildberries, Lamoda и тд) с последующей доставкой заказчику.
