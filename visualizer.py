@@ -4,22 +4,10 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from src.labels import MARKETPLACE_RU, translate
-
-MOSCOW_CENTER = {"lat": 55.7522, "lon": 37.6156}
+from src.labels import NICHE_RU, translate
 
 
-def _map_layout(fig: go.Figure, title: str) -> go.Figure:
-    fig.update_layout(
-        title=dict(text=title, font=dict(size=16)),
-        font=dict(family="Segoe UI, Arial, sans-serif", size=13),
-        margin={"r": 0, "t": 70, "l": 0, "b": 0},
-        height=620,
-    )
-    return fig
-
-
-def _chart_layout(fig: go.Figure, title: str) -> go.Figure:
+def _ru_layout(fig: go.Figure, title: str) -> go.Figure:
     fig.update_layout(
         title=dict(text=title, font=dict(size=16)),
         font=dict(family="Segoe UI, Arial, sans-serif", size=13),
@@ -29,73 +17,73 @@ def _chart_layout(fig: go.Figure, title: str) -> go.Figure:
     return fig
 
 
-class GeoVisualizer:
+class MarketingVisualizer:
     @staticmethod
-    def pvz_density_map(pvz: pd.DataFrame) -> go.Figure:
-        fig = px.density_mapbox(
-            pvz, lat="lat", lon="lon", z="daily_orders",
-            radius=22, center=MOSCOW_CENTER, zoom=10,
-            mapbox_style="open-street-map",
-            labels={"daily_orders": "Дневной поток заказов"},
-        )
-        return _map_layout(fig, "Плотность ПВЗ маркетплейсов в Москве (тепловая карта)")
-
-    @staticmethod
-    def pvz_by_marketplace(pvz: pd.DataFrame) -> go.Figure:
-        d = pvz.copy()
-        d["Маркетплейс"] = translate(d["marketplace"], MARKETPLACE_RU)
-        fig = px.scatter_mapbox(
-            d, lat="lat", lon="lon", color="Маркетплейс",
-            hover_name="pvz_id",
-            hover_data={"district": True, "daily_orders": True,
-                        "lat": False, "lon": False, "Маркетплейс": False},
-            center=MOSCOW_CENTER, zoom=10,
-            mapbox_style="open-street-map",
-        )
-        fig.update_traces(marker=dict(size=10))
-        return _map_layout(fig, "ПВЗ Ozon, Wildberries и Lamoda по районам")
-
-    @staticmethod
-    def okrug_bar(okrug_summary: pd.DataFrame) -> go.Figure:
+    def roas_bar(channel_eff: pd.DataFrame) -> go.Figure:
         fig = px.bar(
-            okrug_summary.sort_values("daily_orders", ascending=True),
-            x="daily_orders", y="okrug", orientation="h",
-            color="pvz_count", color_continuous_scale="Viridis",
-            labels={"daily_orders": "Заказов в день",
-                    "okrug": "Округ Москвы",
-                    "pvz_count": "Кол-во ПВЗ"},
+            channel_eff.sort_values("roas", ascending=True),
+            x="roas", y="channel", orientation="h",
+            color="avg_engagement_rate_pct", color_continuous_scale="Viridis",
+            labels={"roas": "ROAS (выручка ÷ затраты на рекламу)",
+                    "channel": "Канал",
+                    "avg_engagement_rate_pct": "Engagement Rate, %"},
         )
-        return _chart_layout(fig, "Поток заказов с маркетплейсов по округам Москвы")
+        return _ru_layout(fig, "ROAS по 12 рекламным каналам (бенчмарк проекта)")
 
     @staticmethod
-    def hub_coverage_map(pvz: pd.DataFrame, hubs: pd.DataFrame,
-                         radius_km: float = 8.0) -> go.Figure:
-        d = pvz.copy()
-        d["Маркетплейс"] = translate(d["marketplace"], MARKETPLACE_RU)
-        fig = px.scatter_mapbox(
-            d, lat="lat", lon="lon", color="Маркетплейс", opacity=0.55,
-            zoom=10, center=MOSCOW_CENTER, mapbox_style="open-street-map",
-            hover_data={"district": True, "daily_orders": True,
-                        "lat": False, "lon": False, "Маркетплейс": False},
+    def cpm_vs_engagement(channel_eff: pd.DataFrame) -> go.Figure:
+        fig = px.scatter(
+            channel_eff,
+            x="avg_cpm_rub", y="avg_engagement_rate_pct",
+            size="reach_per_post", color="channel", hover_name="channel",
+            labels={"avg_cpm_rub": "CPM (стоимость 1000 показов), руб",
+                    "avg_engagement_rate_pct": "Engagement Rate, %",
+                    "reach_per_post": "Охват за пост", "channel": "Канал"},
         )
-        fig.update_traces(marker=dict(size=8), selector=dict(type="scattermapbox"))
-        fig.add_trace(go.Scattermapbox(
-            lat=hubs["lat"], lon=hubs["lon"],
-            mode="markers+text",
-            marker=dict(size=22, color="black", symbol="star"),
-            text=hubs["hub_district"], textposition="top center",
-            textfont=dict(size=14, color="black"),
-            name=f"Хабы упаковки (радиус {radius_km} км)",
-            hovertemplate="<b>Хаб: %{text}</b><extra></extra>",
-        ))
-        return _map_layout(fig, f"Рекомендуемые хабы упаковки WrapItUp (радиус покрытия {radius_km} км)")
+        return _ru_layout(fig, "Связь стоимости показов (CPM) и вовлечённости")
 
     @staticmethod
-    def distance_histogram(distance_df: pd.DataFrame) -> go.Figure:
-        d = distance_df.copy()
-        d["Маркетплейс"] = translate(d["marketplace"], MARKETPLACE_RU)
-        fig = px.histogram(
-            d, x="distance_km", nbins=30, color="Маркетплейс",
-            labels={"distance_km": "Расстояние от ПВЗ до ближайшего хаба, км"},
+    def budget_allocation_pie(plan: pd.DataFrame) -> go.Figure:
+        fig = px.pie(plan, names="channel", values="budget_rub", hole=0.45)
+        return _ru_layout(fig, "Распределение бюджета по каналам")
+
+    @staticmethod
+    def competitor_engagement(competitors: pd.DataFrame) -> go.Figure:
+        d = competitors.copy()
+        d["Ниша"] = translate(d["niche"], NICHE_RU)
+        fig = px.scatter(
+            d, x="followers", y="engagement_rate_pct",
+            size="avg_views", color="Ниша", hover_name="account",
+            labels={"followers": "Подписчиков",
+                    "engagement_rate_pct": "Engagement Rate, %",
+                    "avg_views": "Среднее число просмотров"},
         )
-        return _chart_layout(fig, "Плечо доставки от ПВЗ до ближайшего хаба упаковки")
+        fig.update_xaxes(type="log")
+        return _ru_layout(fig, "Конкуренты по нише: подписчики и ER")
+
+    @staticmethod
+    def kpi_indicators(kpis: dict) -> go.Figure:
+        fig = go.Figure()
+        fig.add_trace(go.Indicator(
+            mode="number", value=kpis["total_reach"],
+            title={"text": "Прогноз охвата"},
+            domain={"row": 0, "column": 0}))
+        fig.add_trace(go.Indicator(
+            mode="number", value=kpis["total_orders"],
+            title={"text": "Прогноз заказов"},
+            domain={"row": 0, "column": 1}))
+        fig.add_trace(go.Indicator(
+            mode="number", value=kpis["total_revenue_rub"],
+            number={"prefix": "₽ ", "valueformat": ",.0f"},
+            title={"text": "Прогноз выручки"},
+            domain={"row": 0, "column": 2}))
+        fig.add_trace(go.Indicator(
+            mode="number", value=kpis["blended_roas"],
+            title={"text": "Средний ROAS"},
+            domain={"row": 0, "column": 3}))
+        fig.update_layout(
+            grid={"rows": 1, "columns": 4, "pattern": "independent"},
+            margin={"r": 20, "t": 40, "l": 20, "b": 20}, height=210,
+            font=dict(family="Segoe UI, Arial, sans-serif", size=14),
+        )
+        return fig
